@@ -7,11 +7,13 @@
     MESSAGE_NAME            DB  'Type your name: $'
     MESSAGE_INTRO_TITLE     DB  'WELCOME TO THE QUIZ CHALLENGE - TEST YOUR MIND AND WIT$'
     MESSAGE_INTRO_DESC1     DB  'Here, you will face 10 fun and surprising questions$'
-    MESSAGE_INTRO_DESC2     DB  'Each question has 4 options: A, B, C, and D - and you only have one chance to choose the correct answer.$'
-    MESSAGE_INTRO_DESC3     DB  'Every correct answer brings you closer to earning the title of Quiz Master.$'
+    MESSAGE_INTRO_DESC2A    DB  'Each question has 4 options: A, B, C, and D$'
+    MESSAGE_INTRO_DESC2B    DB  '- and you only have one chance to choose the correct answer.$'
+    MESSAGE_INTRO_DESC3A    DB  'Every correct answer brings you closer$'
+    MESSAGE_INTRO_DESC3B    DB  'to earning the title of Quiz Master.$'
     MESSAGE_INTRO_DESC4     DB  'Can you answer all 10 questions without making a mistake?$'
     MESSAGE_INTRO_DESC5     DB  'Get ready, stay focused, and... let the challenge begin!$'
-    MESSAGE_INTRO_DESC6     DB  'Press any key to start...$'
+    MESSAGE_INTRO_DESC6     DB  'Press any key to continue...$'
     MESSAGE_INTRO_CREDIT    DB  'Made by Nhom BTL4 - D23CQCE01-B with love!$'
     MESSAGE_QUIZ_TITLE      DB  'Question $'
     MESSAGE_QUIZ_OPT_A      DB  'A. $'
@@ -20,10 +22,10 @@
     MESSAGE_QUIZ_OPT_D      DB  'D. $'
     MESSAGE_QUIZ_ANSWER     DB  'Your answer: $'
     MESSAGE_QUIZ_ERROR      DB  10, 13, 'Invalid Input!!! Touch some grass man.$'
-    MESSAGE_OUTRO_TITLE     DB  'GAME OVER!$'
-    MESSAGE_OUTRO_DESC1     DB  'Your score: $'
-    MESSAGE_OUTRO_DESC2     DB  'Rank: $'
-    MESSAGE_OUTRO_DESC3     DB  'Thank you for playing!$'
+    MESSAGE_OUTRO_TITLE     DB  '                                 GAME OVER!$'
+    MESSAGE_OUTRO_DESC1     DB  '                              Your score: $'
+    MESSAGE_OUTRO_DESC2     DB  '                             Rank: $'
+    MESSAGE_OUTRO_DESC3     DB  '                           Thank you for playing!$'
     MESSAGE_GAME_RANK1      DB  'QUIZ MASTER$'
     MESSAGE_GAME_RANK2      DB  'QUIZ EXPERT$'
     MESSAGE_GAME_RANK3      DB  'QUIZ COMPETENT$'
@@ -137,6 +139,9 @@
     ;========================;
     UTILS_ENDL              DB  13, 10, '$'
     UTILS_COLON             DB  ': $'
+    UTILS_SPACE_XL          DB  '                        $'
+    UTILS_SPACE_LG          DB  '             $'
+    UTILS_SPACE_MD          DB  '         $'
 .CODE
     ; MACRO TO CALL PRINT STRING
     STRING_OUT MACRO  
@@ -173,7 +178,8 @@
     ENDM
 
     ; MACRO TO PRINT N-DIGIT NUMBER NUM
-    PRINTF_NUMBER MACRO NUM 
+    PRINTF_NUMBER MACRO NUM
+        LOCAL CONVERT_LOOP, PRINT_LOOP
         ; AX = TARGET
         MOV AL, NUM                                 ; AL <- NUM
         XOR AH, AH                                  ; AH <- 0 (RESET AH -> 16BIT MODE)
@@ -260,17 +266,36 @@
     
     ; OPENING SCREEN
     INTRO_SCREEN PROC
+        ENDL_OUT
+        ENDL_OUT
+        ENDL_OUT
+        PRINTF_STRING_INLINE UTILS_SPACE_LG
         PRINTF_STRING MESSAGE_INTRO_TITLE           ; PRINT OPENING TITLE
-        PRINTF_STRING UTILS_ENDL
+        ENDL_OUT
+        ENDL_OUT
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
         PRINTF_STRING MESSAGE_INTRO_DESC1           ; PRINT OPENING DESCRIPTION
-        PRINTF_STRING MESSAGE_INTRO_DESC2
-        PRINTF_STRING MESSAGE_INTRO_DESC3
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
+        PRINTF_STRING MESSAGE_INTRO_DESC2A
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
+        PRINTF_STRING MESSAGE_INTRO_DESC2B
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
+        PRINTF_STRING MESSAGE_INTRO_DESC3A
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
+        PRINTF_STRING MESSAGE_INTRO_DESC3B
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
         PRINTF_STRING MESSAGE_INTRO_DESC4
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
         PRINTF_STRING MESSAGE_INTRO_DESC5
-        PRINTF_STRING UTILS_ENDL
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
+        ENDL_OUT
+        ENDL_OUT
+        PRINTF_STRING_INLINE UTILS_SPACE_MD
         PRINTF_STRING MESSAGE_INTRO_CREDIT          ; PRINT OPENING CREDIT
-        PRINTF_STRING UTILS_ENDL
-        PRINTF_STRING MESSAGE_INTRO_DESC6
+        ENDL_OUT
+        ENDL_OUT
+        PRINTF_STRING_INLINE UTILS_SPACE_XL
+        PRINTF_STRING_INLINE MESSAGE_INTRO_DESC6
         MOV AH, 07h                                 ; KEYBOARD INTERRUPT
         INT 21h
         RET
@@ -284,17 +309,34 @@
     
     OUTRO_SCREEN PROC
         CALL CLS                                    ; CLEAN SCREEN
+        ENDL_OUT
+        ENDL_OUT
+        ENDL_OUT
         PRINTF_STRING MESSAGE_OUTRO_TITLE           ; PRINT ENDING TITLE
+        ENDL_OUT
         PRINTF_STRING_INLINE MESSAGE_OUTRO_DESC1    ; PRINT ENDING SCORE DESCRIPTION
         PRINTF_NUMBER SCORE                         ; PRINT SCORE
         ENDL_OUT
         CALL EVALUATE_RANK                          ; PRINT ENDING RANK
+        ENDL_OUT
+        ENDL_OUT
         PRINTF_STRING MESSAGE_OUTRO_DESC3           ; PRINT THANK YOU
+        ENDL_OUT
+        ENDL_OUT
+        ENDL_OUT
+        PRINTF_STRING_INLINE UTILS_SPACE_XL
+        PRINTF_STRING_INLINE MESSAGE_INTRO_DESC6
+        MOV AH, 07h                                 ; KEYBOARD INTERRUPT
+        INT 21h
+        CALL CLS
         RET
     OUTRO_SCREEN ENDP
     
     QUESTION_SCREEN PROC
     LOOP_QUESTION:
+        ENDL_OUT
+        ENDL_OUT
+        ENDL_OUT
         PRINTF_STRING_INLINE MESSAGE_QUIZ_TITLE     ; PRINT QUESTION LABEL TITLE
         PRINTF_NUMBER CURRENT_QUESTION              ; PRINT CURRENT QUESTION NUMBER
         PRINTF_STRING_INLINE UTILS_COLON            ; PRINT COLON
@@ -307,6 +349,7 @@
         MOV DX, [SI + BX]                           ; DX <- ADDRESS OF CURRENT QUESTION
         STRING_OUT                                  ; PRINT CURRENT QUESTION
         ENDL_OUT                                    ; PRINT NEW LINE
+        ENDL_OUT
 
         XOR CX, CX                                  ; CX <- 0 (RESET CHOICE INDEX)
 
@@ -333,6 +376,7 @@
         INC CX                                      ; CX <- CX + 1 (NEXT CHOICE INDEX)
         CMP CX, 4                                   ; COMPARE CX WITH 4 (TOTAL CHOICES)
         JL LOOP_PRINT_CHOICE                        ; IF CX < 4, LOOP BACK TO PRINT NEXT CHOICE
+        ENDL_OUT
         JMP LOOP_VALIDATE_INPUT                     ; OTHERWISE, JUMP TO INPUT VALIDATION
 
     LOOP_VALIDATE_ERROR:
@@ -362,7 +406,8 @@
         MOV CX, AX                                  ; CX <- AX (STORE CHOICE INDEX IN CX)
         
         MOV BX, DI                                  ; BX <- DI (COPY QUESTION INDEX TO BX)
-        SHL BX, 2                                   ; BX <- BX * 4 (OFFSET FOR 4 CHOICES PER QUESTION)
+        SHL BX, 1                                   ; BX <- BX * 4 (OFFSET FOR 4 CHOICES PER QUESTION)
+        SHL BX, 1 
         ADD BX, CX                                  ; BX <- BX + CX (ADD CHOICE INDEX TO OFFSET)
         SHL BX, 1                                   ; BX <- BX * 2 (WORD OFFSET)
 
@@ -390,6 +435,7 @@
     MAIN PROC
         MOV AX, @DATA                               ; AX <- ADDRESS OF DATA SEGMENT (LOAD DATA SEGMENT)
         MOV DS, AX                                  ; DS <- AX (INITIALIZE DATA SEGMENT)
+        CALL CLS
         CALL INTRO_SCREEN                           ; CALL PROCEDURE INTRO SCREEN
         CALL QUIZ_SCREEN                            ; CALL PROCEDURE QUIZ SCREEN
         CALL OUTRO_SCREEN                           ; CALL PROCEDURE END SCREEN
