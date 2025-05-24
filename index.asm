@@ -161,13 +161,13 @@
         STRING_OUT                                  ; PRINT MSG
         ENDL_OUT                                    ; PRINT ENDL
     ENDM
-    
+
     ; MACRO TO PRINT STRING MSG (WITHOUT BREAK LINE)
     PRINTF_STRING_INLINE MACRO MSG 
         LEA DX, MSG                                 ; DX <- MSG (STRING)
         STRING_OUT                                  ; PRINT MSG
     ENDM
-    
+
     ; MACRO TO PRINT 1-DIGIT NUMBER NUM
     PRINTF_DIGIT MACRO NUM 
         MOV AL, NUM                                 ; AL <- NUM
@@ -185,7 +185,7 @@
         XOR AH, AH                                  ; AH <- 0 (RESET AH -> 16BIT MODE)
         MOV CX, 10                                  ; CX <- 10
         XOR BX, BX                                  ; BX <- 0 (RESET BX FOR COUNT NUMBER OF DIGITS)
-    
+
     CONVERT_LOOP:
         XOR DX, DX                                  ; DX <- 0 (RESET DX)
         DIV CX                                      ; AX / CX (10) => AX = Q, DX = R
@@ -204,20 +204,8 @@
 
     ; PROCEDURE TO CLEAR SCREEN
     CLS PROC
-        XOR CX, CX                                  ; CX <- 0 (RESET CX TO TOP-LEFT CORNER)
-        MOV DH, 24                                  ; DH <- 24 (SET BOTTOM ROW)
-        MOV DL, 79                                  ; DL <- 79 (SET RIGHTMOST COLUMN)
-        MOV BH, 7                                   ; BH <- 7 (WHITE TEXT ON BLACK BACKGROUND)
-        MOV AL, 0                                   ; AL <- 0 (CLEAR SCREEN CONTENT)
-        MOV AH, 06h                                 ; AH <- 06h (SCROLL UP FUNCTION)
-        INT 10h                                     ; CALL VIDEO INTERRUPT TO CLEAR SCREEN
-
-        MOV AH, 02h                                 ; AH <- 02h (SET CURSOR POSITION FUNCTION)
-        MOV BH, 0                                   ; BH <- 0 (CURRENT PAGE)
-        XOR DH, DH                                  ; DH <- 0 (SET CURSOR TO TOP ROW)
-        XOR DL, DL                                  ; DL <- 0 (SET CURSOR TO LEFTMOST COLUMN)
-        INT 10h                                     ; CALL VIDEO INTERRUPT TO SET CURSOR POSITION
-
+        MOV AX, 03h                                 ; AX <- 03h (80 X 25 MODE)
+        INT 10h
         RET
     CLS ENDP
     
@@ -226,11 +214,11 @@
         PRINTF_STRING_INLINE MESSAGE_OUTRO_DESC2    ; PRINT RANK DESCRIPTION
         
         MOV AL, [SCORE]                             ; AL <- [SCORE] (COPY SCORE VALUE TO AL)
-        CMP AL, 90                                  ; COMPARE AL WITH 90
-        JGE EVALUATE_RANK1                          ; AL >= 90 -> RANK 1
+        CMP AL, 93                                  ; COMPARE AL WITH 93
+        JGE EVALUATE_RANK1                          ; AL >= 93 -> RANK 1
         
         CMP AL, 70                                  ; COMPARE AL WITH 70
-        JGE EVALUATE_RANK2                          ; 90 > AL >= 70 -> RANK 2
+        JGE EVALUATE_RANK2                          ; 93 > AL >= 70 -> RANK 2
 
         CMP AL, 50                                  ; COMPARE AL WITH 50
         JGE EVALUATE_RANK3                          ; 70 > AL >= 50 -> RANK 3
