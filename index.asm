@@ -4,7 +4,6 @@
     ;========================;
     ;    Message Strings     ;
     ;========================;
-    MESSAGE_NAME            DB  'Type your name: $'
     MESSAGE_INTRO_TITLE     DB  'WELCOME TO THE QUIZ CHALLENGE - TEST YOUR MIND AND WIT$'
     MESSAGE_INTRO_DESC1     DB  'Here, you will face 10 fun and surprising questions$'
     MESSAGE_INTRO_DESC2A    DB  'Each question has 4 options: A, B, C, and D$'
@@ -26,6 +25,7 @@
     MESSAGE_OUTRO_DESC1     DB  '                              Your score: $'
     MESSAGE_OUTRO_DESC2     DB  '                             Rank: $'
     MESSAGE_OUTRO_DESC3     DB  '                           Thank you for playing!$'
+    MESSAGE_OUTRO_ASK       DB  '                              Retry? [Y/N]: $'
     MESSAGE_GAME_RANK1      DB  'QUIZ MASTER$'
     MESSAGE_GAME_RANK2      DB  'QUIZ EXPERT$'
     MESSAGE_GAME_RANK3      DB  'QUIZ COMPETENT$'
@@ -133,6 +133,7 @@
     SCORE                   DB  0
     CURRENT_INDEX           DB  0
     CURRENT_QUESTION        DB  1
+    IS_RETRY                DB  0
 
     ;========================;
     ;        Utilities       ;
@@ -284,16 +285,10 @@
         ENDL_OUT
         PRINTF_STRING_INLINE UTILS_SPACE_XL
         PRINTF_STRING_INLINE MESSAGE_INTRO_DESC6
-        MOV AH, 07h                                 ; KEYBOARD INTERRUPT
+        MOV AH, 07h
         INT 21h
         RET
     INTRO_SCREEN ENDP
-
-    QUIZ_SCREEN PROC
-        CALL CLS                                    ; CLEAN SCREEN
-        CALL QUESTION_SCREEN                        ; QUESTION SCREEN
-        RET
-    QUIZ_SCREEN ENDP
     
     OUTRO_SCREEN PROC
         CALL CLS                                    ; CLEAN SCREEN
@@ -308,18 +303,43 @@
         CALL EVALUATE_RANK                          ; PRINT ENDING RANK
         ENDL_OUT
         ENDL_OUT
+        PRINTF_STRING_INLINE MESSAGE_OUTRO_ASK
+
+    LOOP_VALIDATE_ASK:
+        MOV AH, 08h
+        INT 21h
+
+        CMP AL, 'Y'
+        JE RETRY_TRUE
+        CMP AL, 'N'
+        JE RETRY_FALSE
+        JMP LOOP_VALIDATE_ASK
+
+    RETRY_TRUE:
+        MOV AL, [IS_RETRY]
+        MOV AL, 1
+        MOV [IS_RETRY], AL
+        JMP OUTRO_END_FUNC
+
+    RETRY_FALSE:
+        ENDL_OUT
         PRINTF_STRING MESSAGE_OUTRO_DESC3           ; PRINT THANK YOU
         ENDL_OUT
         ENDL_OUT
         ENDL_OUT
         PRINTF_STRING_INLINE UTILS_SPACE_XL
         PRINTF_STRING_INLINE MESSAGE_INTRO_DESC6
-        MOV AH, 07h                                 ; KEYBOARD INTERRUPT
-        INT 21h
-        CALL CLS
+    
+    OUTRO_END_FUNC:
         RET
     OUTRO_SCREEN ENDP
     
+    QUIZ_SCREEN PROC
+        CALL CLS                                    ; CLEAN SCREEN
+        CALL QUESTION_SCREEN                        ; QUESTION SCREEN
+        RET
+    QUIZ_SCREEN ENDP
+
     QUESTION_SCREEN PROC
     LOOP_QUESTION:
         ENDL_OUT
@@ -384,6 +404,11 @@
 
     CALCULATE_SCORE:
         ; Compute offset: (DI * 4 + CX) * 2 (word index)
+        ; Explain: With CURRENT_INDEX = 0:
+        ; If CX = 0 (choice A), BX = 0, retrieving the first word (score 0).
+        ; If CX = 1 (choice B), BX = 2, retrieving the second word (score 0).
+        ; If CX = 2 (choice C), BX = 4, retrieving the third word (score 10).
+        ; If CX = 3 (choice D), BX = 6, retrieving the fourth word (score 0).
         MOV AL, [CURRENT_INDEX]                     ; AL <- CURRENT_INDEX (GET CURRENT QUESTION INDEX)
         XOR AH, AH                                  ; AH <- 0 (RESET AH FOR 16-BIT MODE)
         MOV DI, AX                                  ; DI <- AX (STORE QUESTION INDEX IN DI)
@@ -423,10 +448,41 @@
     MAIN PROC
         MOV AX, @DATA                               ; AX <- ADDRESS OF DATA SEGMENT (LOAD DATA SEGMENT)
         MOV DS, AX                                  ; DS <- AX (INITIALIZE DATA SEGMENT)
+        JMP START_PROG
+
+    START_PROG:
         CALL CLS
         CALL INTRO_SCREEN                           ; CALL PROCEDURE INTRO SCREEN
+
+    LOOP_MAIN:
         CALL QUIZ_SCREEN                            ; CALL PROCEDURE QUIZ SCREEN
         CALL OUTRO_SCREEN                           ; CALL PROCEDURE END SCREEN
+        
+        ; CHECK RETRY
+        MOV AL, [IS_RETRY]
+        CMP AL, 1
+        JE RESET_VARIABLES
+        JMP LOOP_MAIN_END
+    
+    RESET_VARIABLES:
+        MOV AL, [SCORE]
+        XOR AL, AL
+        MOV [SCORE], AL
+        
+        MOV AL, [CURRENT_INDEX]
+        XOR AL, AL
+        MOV [CURRENT_INDEX], AL
+        
+        MOV AL, [CURRENT_QUESTION]
+        MOV AL, 1
+        MOV [CURRENT_QUESTION], AL
+
+        JMP LOOP_MAIN
+    
+    LOOP_MAIN_END:
+        MOV AH, 07h
+        INT 21h
+
         MOV AH, 4Ch                                 ; AH <- 4Ch (SET DOS INTERRUPT)
         INT 21h                                     ; DOS INTERRUPT (TERMINATE)   
     MAIN ENDP
